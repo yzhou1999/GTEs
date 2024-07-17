@@ -1,0 +1,314 @@
+---
+title: "Group technical effects calculation and highly technical genes selection"
+author: "Yang Zhou"
+date: "2024-06-06"
+output: html_document
+package: SIGNAL
+vignette: |
+  %\VignetteIndexEntry{GTEs: quantifying batch effects for individual genes in single-cell data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 0. Introduction
+
+GTEs (Group Technique Effects) quantify batch effects for individual genes inn single-cell data. Then, we can select those genes that dominate the batch effects in the dataset, called highly technical genes (HTGs), with remaining genes called lowly technical genes (LTGs). In this vignette, we demonstrate on a single-cell RNA sequencing (scRNA-seq) dataset ([mouse cortex](https://www.nature.com/articles/s41586-021-03500-8)) and a single-cell proteomics dataset ([human PBMCs (CITE-seq)](https://www.nature.com/articles/s41587-021-00927-2)) how to estimate and remove batch effects in a dataset using GTEs.
+
+```{r, message=FALSE, warning=FALSE}
+library(GTEs)
+library(irlba)
+library(uwot)
+library(ggpubr)
+library(randomcoloR)
+library(cowplot)
+set.seed(2024)
+```
+
+# 1. Application of GTEs on scRNA-seq data
+## 1.1 Load data matrix and metadata
+
+```{r, message=TRUE, warning=FALSE}
+X = readRDS("/home/server/zy/group_scripts/datasets_preparation/mouse_cortex/X.rds")
+str(X)
+meta = readRDS("/home/server/zy/group_scripts/datasets_preparation/mouse_cortex/Meta.rds")
+str(meta)
+# The highly variable genes (HVGs) are already calculated.
+hvgs = readRDS("/home/server/zy/group_scripts/datasets_preparation/mouse_cortex/vargs.rds")
+length(hvgs)
+```
+
+The data has multiple group variables available, which we will use separately for the GTEs calculation. We also add a ``source`` group variable, to indicate that the data is biologically homogeneous.
+
+```{r, message=FALSE, warning=FALSE}
+meta$Source = "homogeneous"
+```
+
+## 1.2 Visualization of raw data
+
+```{r, message=TRUE, warning=FALSE, fig.width=25, fig.height=5}
+Colors = distinctColorPalette(24)
+pca_res = irlba(t(X[hvgs, ]), nv = 50)
+raw_emb = as.matrix(pca_res$u %*% diag(pca_res$d))
+raw_umap = as.data.frame(umap(raw_emb))
+colnames(raw_umap) = c("UMAP1", "UMAP2")
+raw_umap = cbind.data.frame(meta, raw_umap)
+p1 = ggscatter(raw_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Batch", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+p2 = ggscatter(raw_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "SubClass", palette = Colors, legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+p3 = ggscatter(raw_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Technology", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+p4 = ggscatter(raw_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Source", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+plot_grid(p1, p2, p3, p4, align = 'h', axis = "b", nrow = 1)
+```
+
+We can observe strong batch effects in the dataset.
+
+## 1.3 GTEs calculation and HTGs selection
+### 1.3.1 Cell type group variable
+
+We calculate the GTEs using cell type group variable. For the data matrix with many features, we can divide multiple feature subsets for calculation, which is consistent with the result of direct calculation, but more memory saving.
+
+```{r, message=TRUE, warning=FALSE}
+gene_list <- split(rownames(X), ceiling(1:nrow(X) / 2000))
+GTEs_ct0 = lapply(gene_list, function(x) Run.GroupTechEffects(X[x, ], meta, g_factor = "SubClass", b_factor = "Batch"))
+GTEs_ct = list()
+GTEs_ct$GroupTechEffects = Reduce(rbind, lapply(GTEs_ct0, function(x) x$GroupTechEffects))
+GTEs_ct$OverallTechEffects = Reduce('c', lapply(GTEs_ct0, function(x) x$OverallTechEffects))
+str(GTEs_ct)
+```
+
+The results contain GTEs for each cell type and GTEs for the entire dataset. The latter is the sum of the former. We only use the latter for further analysis here, for the former the readers can get further details from our paper.
+
+Let's look at the overall picture of GTEs in terms of HVGs and all the genes.
+
+```{r, message=TRUE, warning=FALSE, fig.width=6, fig.height=3}
+plot_overall <- function(gtes, genes) {
+  gtes = sort(gtes[genes], decreasing = F)
+  quantile_nums <- findInterval(quantile(gtes, probs = seq(0, 0.9, 0.1)), gtes)
+  cum_gtes = rev(cumsum(rev(unname(gtes))))
+  df = data.frame(GTEs = rev(cum_gtes[quantile_nums]),
+                  Percentage = c('10', '20', '30', '40', '50', '60', '70', '80', '90', '100'))
+  ggbarplot(df, x = "Percentage", y = "GTEs",  
+            legend = "none", fill = "gray", color = "gray", 
+            font.label = list(size = 8, face = "plain"), width = 0.7, alpha = 1, 
+            label = round(df$GTEs, 1), lab.size = 3, lab.col = "black", lab.pos = "out") + 
+    labs(x = "Top GTEs genes (%)", y = "Total GTEs")
+}
+q1 = plot_overall(GTEs_ct$OverallTechEffects, rownames(X)) + labs(title = "Cumulative GTEs of all genes")
+q2 = plot_overall(GTEs_ct$OverallTechEffects, hvgs) + labs(title = "Cumulative GTEs of HVGs")
+plot_grid(q1, q2, align = 'h', axis = "b")
+```
+
+We can see that whether in HVGs or in all genes, some genes dominate the overall GTEs, and we call these genes highly technical genes (HTGs). We can use the ``Select.HTGs`` or function to select those HTGs.
+
+```{r, message=TRUE, warning=FALSE}
+GTEs_ct_hvgs = GTEs_ct
+GTEs_ct_hvgs$GroupTechEffects = GTEs_ct_hvgs$GroupTechEffects[hvgs, ]
+GTEs_ct_hvgs$OverallTechEffects = GTEs_ct_hvgs$OverallTechEffects[hvgs]
+HTGs_hvgs = Select.HTGs(GTEs_ct_hvgs)
+head(HTGs_hvgs)
+HTGs_allgenes = Select.HTGs(GTEs_ct)
+head(HTGs_allgenes)
+```
+
+Let's see what happens when we remove these HTGs.
+
+```{r, message=TRUE, warning=FALSE, fig.width=14, fig.height=5}
+LTGs_hvgs = hvgs[!hvgs %in% HTGs_hvgs]
+pca_res = irlba(t(X[LTGs_hvgs, ]), nv = 50)
+ltgs_hvgs_emb = as.matrix(pca_res$u %*% diag(pca_res$d))
+ltgs_hvgs_umap = as.data.frame(umap(ltgs_hvgs_emb))
+colnames(ltgs_hvgs_umap) = c("UMAP1", "UMAP2")
+ltgs_hvgs_umap = cbind.data.frame(meta, ltgs_hvgs_umap)
+q1 = ggscatter(ltgs_hvgs_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Batch", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+q2 = ggscatter(ltgs_hvgs_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "SubClass", palette = Colors, legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+plot_grid(q1, q2, align = 'h', axis = "b")
+```
+
+```{r, message=TRUE, warning=FALSE, fig.width=14, fig.height=5}
+LTGs_allgenes = rownames(X)[!rownames(X) %in% HTGs_allgenes]
+pca_res = irlba(t(X[LTGs_allgenes, ]), nv = 50)
+ltgs_allgenes_emb = as.matrix(pca_res$u %*% diag(pca_res$d))
+ltgs_allgenes_umap = as.data.frame(umap(ltgs_allgenes_emb))
+colnames(ltgs_allgenes_umap) = c("UMAP1", "UMAP2")
+ltgs_allgenes_umap = cbind.data.frame(meta, ltgs_allgenes_umap)
+q3 = ggscatter(ltgs_allgenes_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Batch", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+q4 = ggscatter(ltgs_allgenes_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "SubClass", palette = Colors, legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+plot_grid(q3, q4, align = 'h', axis = "b")
+```
+
+Removing HTGs from HVGs effectively removed the batch effects, while PCA result on all genes still showed strong batch effects. This is because the GTEs of the remaining genes are still large. Further selection across all genes and removal of more HTGs do not improve the results. In our paper, we show that removing too many genes from the all genes in the scRNA-seq data results in insufficient variability in the data to indicate cellular identity. Therefore, for scRNA-seq data, we recommend that HTGs be calculated on HVGs and removed.
+
+### 1.3.2 Technology group variable
+
+```{r, message=TRUE, warning=FALSE, fig.width=20, fig.height=5}
+GTEs_tech = Run.GroupTechEffects(X[hvgs, ], meta, g_factor = "Technology", b_factor = "Batch")
+str(GTEs_tech)
+HTGs_hvgs = Select.HTGs(GTEs_tech)
+head(HTGs_hvgs)
+
+LTGs_hvgs = hvgs[!hvgs %in% HTGs_hvgs]
+pca_res = irlba(t(X[LTGs_hvgs, ]), nv = 50)
+ltgs_hvgs_emb = as.matrix(pca_res$u %*% diag(pca_res$d))
+ltgs_hvgs_umap = as.data.frame(umap(ltgs_hvgs_emb))
+colnames(ltgs_hvgs_umap) = c("UMAP1", "UMAP2")
+ltgs_hvgs_umap = cbind.data.frame(meta, ltgs_hvgs_umap)
+q5 = ggscatter(ltgs_hvgs_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Batch", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+q6 = ggscatter(ltgs_hvgs_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "SubClass", palette = Colors, legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+q7 = ggscatter(ltgs_hvgs_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Technology", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+plot_grid(q5, q6, q7, align = 'h', axis = "b", nrow = 1)
+```
+
+### 1.3.3 Source group variable
+
+```{r, message=TRUE, warning=FALSE, fig.width=20, fig.height=5}
+GTEs_source = Run.GroupTechEffects(X[hvgs, ], meta, g_factor = "Source", b_factor = "Batch")
+str(GTEs_source)
+HTGs_hvgs = Select.HTGs(GTEs_source)
+head(HTGs_hvgs)
+
+LTGs_hvgs = hvgs[!hvgs %in% HTGs_hvgs]
+pca_res = irlba(t(X[LTGs_hvgs, ]), nv = 50)
+ltgs_hvgs_emb = as.matrix(pca_res$u %*% diag(pca_res$d))
+ltgs_hvgs_umap = as.data.frame(umap(ltgs_hvgs_emb))
+colnames(ltgs_hvgs_umap) = c("UMAP1", "UMAP2")
+ltgs_hvgs_umap = cbind.data.frame(meta, ltgs_hvgs_umap)
+q9 = ggscatter(ltgs_hvgs_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Batch", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+q10 = ggscatter(ltgs_hvgs_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "SubClass", palette = Colors, legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+q11 = ggscatter(ltgs_hvgs_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Source", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+plot_grid(q9, q10, q11, align = 'h', axis = "b", nrow = 1)
+```
+
+## 1.4 Random gene removal
+
+We show that random gene removal cannot remove the batch effects.
+
+```{r, message=TRUE, warning=FALSE, fig.width=14, fig.height=5}
+sample_genes = sort(sample(1:4000, 2400))
+pca_res = irlba(t(X[hvgs[-sample_genes], ]), nv = 50)
+subset_emb = as.matrix(pca_res$u %*% diag(pca_res$d))
+subset_umap = as.data.frame(umap(subset_emb))
+colnames(subset_umap) = c("UMAP1", "UMAP2")
+subset_umap = cbind.data.frame(meta, subset_umap)
+r1 = ggscatter(subset_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Batch", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+r2 = ggscatter(subset_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "SubClass", palette = Colors, legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+plot_grid(r1, r2, align = 'h', axis = "b")
+```
+
+# 2. Application of SIGNAL on single-cell proteomics data
+## 2.1 Load data matrix and metadata
+
+We show that highly technical features are applicable even for single-cell data with few features.
+
+```{r, message=TRUE, warning=FALSE}
+X = readRDS(paste0("/home/server/zy/group_scripts/datasets_preparation/PBMCs_CITE/X.rds"))
+str(X)
+meta = readRDS(paste0("/home/server/zy/group_scripts/datasets_preparation/PBMCs_CITE/meta.rds"))
+meta$Source = "homologous"
+str(meta)
+```
+
+## 2.2 Visualization of raw data
+
+```{r, message=TRUE, warning=FALSE, fig.width=12, fig.height=5}
+pca_res = irlba(t(X), nv = 30)
+raw_emb = as.matrix(pca_res$u %*% diag(pca_res$d))
+raw_umap = as.data.frame(umap(raw_emb))
+colnames(raw_umap) = c("UMAP1", "UMAP2")
+raw_umap = cbind.data.frame(meta, raw_umap)
+p1 = ggscatter(raw_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Batch", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+p2 = ggscatter(raw_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "CellType", palette = Colors, legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+plot_grid(p1, p2, align = 'h', axis = "b", nrow = 1)
+```
+
+## 2.3 GTEs calculation and highly technical proteins selection
+### 2.3.1 Cell type group variable
+
+```{r, message=TRUE, warning=FALSE}
+GTEs_ct = Run.GroupTechEffects(X, meta, g_factor = "CellType", b_factor = "Batch")
+str(GTEs_ct)
+HTPs = Select.HTGs(GTEs_ct)
+head(HTPs)
+```
+
+```{r, message=TRUE, warning=FALSE, fig.width=12, fig.height=5}
+LTPs = rownames(X)[!rownames(X) %in% HTPs]
+pca_res = irlba(t(X[LTPs, ]), nv = 30)
+ltps_emb = as.matrix(pca_res$u %*% diag(pca_res$d))
+ltps_umap = as.data.frame(umap(ltps_emb))
+colnames(ltps_umap) = c("UMAP1", "UMAP2")
+ltps_umap = cbind.data.frame(meta, ltps_umap)
+q1 = ggscatter(ltps_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Batch", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+q2 = ggscatter(ltps_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "CellType", palette = Colors, legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+plot_grid(q1, q2, align = 'h', axis = "b", nrow = 1)
+```
+
+### 2.3.2 Source group variable
+
+```{r, message=TRUE, warning=FALSE}
+GTEs_source = Run.GroupTechEffects(X, meta, g_factor = "Source", b_factor = "Batch")
+str(GTEs_source)
+HTPs = Select.HTGs(GTEs_source)
+head(HTPs)
+```
+
+```{r, message=TRUE, warning=FALSE, fig.width=12, fig.height=5}
+LTPs = rownames(X)[!rownames(X) %in% HTPs]
+pca_res = irlba(t(X[LTPs, ]), nv = 30)
+ltps_emb = as.matrix(pca_res$u %*% diag(pca_res$d))
+ltps_umap = as.data.frame(umap(ltps_emb))
+colnames(ltps_umap) = c("UMAP1", "UMAP2")
+ltps_umap = cbind.data.frame(meta, ltps_umap)
+q3 = ggscatter(ltps_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Batch", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+q4 = ggscatter(ltps_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "CellType", palette = Colors, legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+plot_grid(q3, q4, align = 'h', axis = "b", nrow = 1)
+```
+
+## 2.4 Random protein removal
+
+```{r, message=TRUE, warning=FALSE, fig.width=12, fig.height=5}
+sample_proteins = sort(sample(1:223, 45))
+pca_res = irlba(t(X[-sample_proteins, ]), nv = 30)
+subset_emb = as.matrix(pca_res$u %*% diag(pca_res$d))
+subset_umap = as.data.frame(umap(subset_emb))
+colnames(subset_umap) = c("UMAP1", "UMAP2")
+subset_umap = cbind.data.frame(meta, subset_umap)
+r1 = ggscatter(subset_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "Batch", palette = "npg", legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+r2 = ggscatter(subset_umap, x = "UMAP1", y = "UMAP2", size = 0.1, color = "CellType", palette = Colors, legend = "right") + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+plot_grid(r1, r2, align = 'h', axis = "b")
+```
+
+<details>
+  <summary>**Session Info**</summary>
+  
+```{r}
+sessionInfo()
+```
+
+</details>
