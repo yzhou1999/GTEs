@@ -14,3 +14,5 @@ LinkingTo: Rcpp (>= 1.0.8), RcppEigen
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 NeedsCompilation: yes
+URL: https://github.com/yzhou1999/GTEs
+BugReports: https://github.com/yzhou1999/GTEs/issues
