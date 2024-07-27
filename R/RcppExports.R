@@ -2,6 +2,6 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 gene_GroupTechEffects <- function(G, BG, X) {
-    .Call('_GTEs_gene_GroupTechEffects', PACKAGE = 'GTEs', G, BG, X)
+    .Call('_GTE_gene_GroupTechEffects', PACKAGE = 'GTE', G, BG, X)
 }
 

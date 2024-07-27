@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // gene_GroupTechEffects
 SEXP gene_GroupTechEffects(const Eigen::Map<Eigen::MatrixXd>& G, const Eigen::Map<Eigen::MatrixXd>& BG, const Eigen::Map<Eigen::MatrixXd>& X);
-RcppExport SEXP _GTEs_gene_GroupTechEffects(SEXP GSEXP, SEXP BGSEXP, SEXP XSEXP) {
+RcppExport SEXP _GTE_gene_GroupTechEffects(SEXP GSEXP, SEXP BGSEXP, SEXP XSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -26,11 +26,11 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_GTEs_gene_GroupTechEffects", (DL_FUNC) &_GTEs_gene_GroupTechEffects, 3},
+    {"_GTE_gene_GroupTechEffects", (DL_FUNC) &_GTE_gene_GroupTechEffects, 3},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_GTEs(DllInfo *dll) {
+RcppExport void R_init_GTE(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }
