@@ -1,6 +1,6 @@
 # GTE (Group Technical Effects)
 
-`GTE` quantifies batch effects for individual genes in single-cell data.
+`GTE` quantifies batch effects for individual genes in single-cell data. If you have any suggestions or problems on this package, please contact Y. Zhou (yangz@stu.hit.edu.cn), or submit through this GitHub page directly.
 
 # Installation
 To run `GTE`, install from GitHub through ``devtools`` directly:
