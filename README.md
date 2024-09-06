@@ -17,7 +17,7 @@ For usage examples, please see the `vignettes` directory of the repository.
 * [Group technical effects calculation and highly technical genes selection](https://yzhou1999.github.io/GTE/articles/GTE_usage.html)
 
 
-The codes and source data to benchmark the batch separation metrics please see [here](https://github.com/yzhou1999/GTE/tree/master/source_data)
+The codes and source data to benchmark the batch separation metrics please see [here](https://github.com/yzhou1999/GTE/tree/master/source_data).
 
 # Datasets used in the manuscript
 The datasets are available freely on public databases, and can also be downloaded in the [Zenodo repository](https://doi.org/10.5281/zenodo.13358933).
