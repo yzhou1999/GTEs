@@ -9,6 +9,7 @@ install.packages('devtools')
 library(devtools)
 devtools::install_github("yzhou1999/GTE")
 ```
+Installation may take from a few seconds to a few minutes.
 
 # Usage
 
@@ -16,6 +17,7 @@ For usage examples, please see the `vignettes` directory of the repository.
 
 * [Group technical effects calculation and highly technical genes selection](https://yzhou1999.github.io/GTE/articles/GTE_usage.html)
 
+We also provided several [demo datasets](https://github.com/yzhou1999/GTE/tree/master/demo_datasets), and our main program may take a few seconds to run on a standard laptop.
 
 The codes and source data to benchmark the batch separation metrics please see [here](https://github.com/yzhou1999/GTE/tree/master/source_data).
 
