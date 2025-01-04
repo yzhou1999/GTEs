@@ -12,7 +12,7 @@ devtools::install_github("yzhou1999/GTEs")
 
 # Usage
 
-For usage examples, please see the `vignettes` directory of the repository.
+See below for usage examples.
 
 * [Group technical effects calculation and highly batch-sensitive genes (HBGs) selection](https://yzhou1999.github.io/GTEs/articles/GTE_usage.html)
 
