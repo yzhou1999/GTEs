@@ -1,18 +1,22 @@
-Package: GTE
+Package: GTEs
 Type: Package
-Title: Group Technical Effects (GTE)
+Title: Group Technical Effects
 Version: 1.0.0
-Date: 2024-07-10
-Author: Yang Zhou
+Language: en-US
+Date: 2025-01-03
 Maintainer: Yang Zhou <yangz@stu.hit.edu.cn>
-Description: Implementation of the GTE model for single-cell data, described in Zhou Y et al.
+Authors@R: person(given = "Yang",
+                  family = "Zhou",
+                  role = c("aut", "cre"),
+                  email = "yangz@stu.hit.edu.cn")
+Description: Implementation of the GTE (Group Technical Effects) model for single-cell data.
 License: GPL-3
 Encoding: UTF-8
-Depends: R (>= 4.0.2)
-Imports: base, stats, Matrix, matrixStats, sparseMatrixStats, Rcpp, RcppEigen, dplyr
+Depends: R (>= 4.0.0)
+Imports: stats, Matrix, matrixStats, Rcpp, RcppEigen, dplyr
 LinkingTo: Rcpp (>= 1.0.8), RcppEigen
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 NeedsCompilation: yes
-URL: https://github.com/yzhou1999/GTE, https://yzhou1999.github.io/GTE/
-BugReports: https://github.com/yzhou1999/GTE/issues
+URL: https://github.com/yzhou1999/GTEs, https://yzhou1999.github.io/GTEs/
+BugReports: https://github.com/yzhou1999/GTEs/issues

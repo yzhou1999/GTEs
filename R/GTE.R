@@ -10,7 +10,14 @@
 #'
 #' @import RcppEigen
 #' @importFrom Rcpp evalCpp
-#' @useDynLib GTE
+#' @examples
+#' \dontrun{
+#' # X is a normalized expression matrix with rows representing genes and columns representing cells.
+#' # meta is a data.frame with columns containing metadata such as cell type, batch, etc.
+#' GTE_ct <- Run.GroupTechEffects(X, meta, g_factor = "CellType", bg_factor = c("Batch", "CellType"))
+#' }
+#' @return A list containing the overall GTE ($OverallTechEffects) and the GTE ($GroupTechEffects) of each subgroup under the group variable.
+#' @useDynLib GTEs
 Run.GroupTechEffects = function(X, meta, g_factor, b_factor, do.scale = F) {
   meta[, g_factor] = as.character(meta[, g_factor])
   if (do.scale) X = scale_data(X, do.center = F)
@@ -33,45 +40,52 @@ Run.GroupTechEffects = function(X, meta, g_factor, b_factor, do.scale = F) {
 }
 
 
-#' Select HTGs under a group variable.
+#' Select highly batch-sensitive genes (HBGs) under a group variable.
 #'
 #' @param GTE GTE result.
 #' @param bins Bins.
-#' @param gte.ratio Ratio of selected HTGs to overall GTE.
-#'
-#' @importFrom dplyr `%>%`
+#' @param gte.ratio Ratio of selected HBGs to the total GTE.
 #'
 #' @export
-Select.HTGs <- function(GTE, bins = 0.1, gte.ratio = 0.95) {
-  htgs_list <- lapply(1:ncol(GTE$GroupTechEffects), function(i) select_htgs(GTE$GroupTechEffects[, i], bins, gte.ratio))
-  names(htgs_list) <- colnames(GTE$GroupTechEffects)
-  each_dfs = lapply(1:length(htgs_list),
-                    function(i) data.frame(gte = unname(GTE$GroupTechEffects[, i][htgs_list[[i]] ]),
-                                           htg = htgs_list[[i]],
-                                           data = names(htgs_list)[i]) )
+#'
+#' @importFrom dplyr `%>%`
+#' @examples
+#' \dontrun{
+#' # GTE is the result of Run.GroupTechEffects function.
+#' HBGs <- Select.HBGs(GTE_ct)
+#' }
+#' @return Identified HBGs.
+#' @useDynLib GTEs
+Select.HBGs <- function(GTE, bins = 0.1, gte.ratio = 0.95) {
+  hbgs_list <- lapply(1:ncol(GTE$GroupTechEffects), function(i) select_hbgs(GTE$GroupTechEffects[, i], bins, gte.ratio))
+  names(hbgs_list) <- colnames(GTE$GroupTechEffects)
+  each_dfs = lapply(1:length(hbgs_list),
+                    function(i) data.frame(gte = unname(GTE$GroupTechEffects[, i][hbgs_list[[i]] ]),
+                                           hbg = hbgs_list[[i]],
+                                           data = names(hbgs_list)[i]) )
   all_df = do.call(rbind, each_dfs)
-  mm = table(all_df[, "htg"]) %>% as.data.frame()
-  colnames(mm) = c("htg", "Freq")
-  mm$htg = as.character(mm$htg)
-  mm$gte = as.vector(tapply(all_df$gte, all_df$htg, sum)[as.character(mm$htg)])
+  mm = table(all_df[, "hbg"]) %>% as.data.frame()
+  colnames(mm) = c("hbg", "Freq")
+  mm$hbg = as.character(mm$hbg)
+  mm$gte = as.vector(tapply(all_df$gte, all_df$hbg, sum)[as.character(mm$hbg)])
   mm = mm[order(-mm$Freq, -mm$gte), ]
-  all_gte = GTE$OverallTechEffects[mm$htg]
-  other_gte = sort(GTE$OverallTechEffects[!names(GTE$OverallTechEffects) %in% mm$htg], decreasing = T)
+  all_gte = GTE$OverallTechEffects[mm$hbg]
+  other_gte = sort(GTE$OverallTechEffects[!names(GTE$OverallTechEffects) %in% mm$hbg], decreasing = T)
   all_gte = c(all_gte, other_gte)
-  all_htgs = select_htgs(all_gte, bins, gte.ratio, is.sort = F)
-  message(paste0("Find ", length(all_htgs), " HTGs, GTE proportion: ", sum(all_gte[all_htgs])/sum(all_gte)))
-  all_htgs
+  all_hbgs = select_hbgs(all_gte, bins, gte.ratio, is.sort = F)
+  message(paste0("Find ", length(all_hbgs), " HBGs, GTE proportion: ", sum(all_gte[all_hbgs])/sum(all_gte)))
+  all_hbgs
 }
 
 
-#' Select HTGs using GTE vector.
+#' Select HBGs using GTE vector.
 #'
 #' @param gte Named GTE vector.
 #' @param bins Bins.
-#' @param gte.ratio Ratio of selected HTGs to overall GTE.
+#' @param gte.ratio Ratio of selected HBGs to overall GTE.
 #' @param is.sort Whether to sort genes by GTE from largest to smallest.
 #'
-select_htgs <- function(gte, bins = 0.1, gte.ratio = 0.95, is.sort = T) {
+select_hbgs <- function(gte, bins = 0.1, gte.ratio = 0.95, is.sort = T) {
   n <- 1/bins
   n_genes <- length(gte)
   split_ns <- split(1:n_genes, ceiling(1:n_genes / ceiling(n_genes/n)))
@@ -79,9 +93,9 @@ select_htgs <- function(gte, bins = 0.1, gte.ratio = 0.95, is.sort = T) {
   GTE <- gte
   if (is.sort) GTE <- sort(gte, decreasing = T)
   ratio_GTE <- cumsum(GTE)[quantile_ns] / sum(GTE)
-  htg_ratio <- which(ratio_GTE >= gte.ratio)[1] * bins
-  htgs <- names(GTE[GTE > stats::quantile(GTE, 1-htg_ratio)])
-  htgs
+  hbg_ratio <- which(ratio_GTE >= gte.ratio)[1] * bins
+  hbgs <- names(GTE[GTE > stats::quantile(GTE, 1-hbg_ratio)])
+  hbgs
 }
 
 

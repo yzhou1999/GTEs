@@ -17,6 +17,16 @@ Run.GroupTechEffects(X, meta, g_factor, b_factor, do.scale = F)
 
 \item{do.scale}{Whether to perform scaling.}
 }
+\value{
+A list containing the overall GTE ($OverallTechEffects) and the GTE ($GroupTechEffects) of each subgroup under the group variable.
+}
 \description{
 Compute the group technical effects.
+}
+\examples{
+\dontrun{
+# X is a normalized expression matrix with rows representing genes and columns representing cells.
+# meta is a data.frame with columns containing metadata such as cell type, batch, etc.
+GTE_ct <- Run.GroupTechEffects(X, meta, g_factor = "CellType", bg_factor = c("Batch", "CellType"))
+}
 }
