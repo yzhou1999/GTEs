@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Group Technical Effects (GTE) • GTE</title>
+<title>Group Technical Effects • GTEs</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Group Technical Effects (GTE)">
-<meta name="description" content="Implementation of the GTE model for single-cell data, described in Zhou Y et al.">
-<meta property="og:description" content="Implementation of the GTE model for single-cell data, described in Zhou Y et al.">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Group Technical Effects">
+<meta name="description" content="Implementation of the GTE (Group Technical Effects) model for single-cell data.">
+<meta property="og:description" content="Implementation of the GTE (Group Technical Effects) model for single-cell data.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -20,7 +20,7 @@
 
     <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
-    <a class="navbar-brand me-2" href="index.html">GTE</a>
+    <a class="navbar-brand me-2" href="index.html">GTEs</a>
 
     <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
@@ -37,7 +37,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/yzhou1999/GTE/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/yzhou1999/GTEs/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -46,46 +46,38 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="gte-group-technical-effects">GTE (Group Technical Effects)<a class="anchor" aria-label="anchor" href="#gte-group-technical-effects"></a>
+<div class="page-header"><h1 id="gtes-r-package">GTEs R package<a class="anchor" aria-label="anchor" href="#gtes-r-package"></a>
 </h1></div>
-<p><code>GTE</code> quantifies batch effects for individual genes in single-cell data. If you have any suggestions or problems on this package, please contact Y. Zhou (<a href="mailto:yangz@stu.hit.edu.cn" class="email">yangz@stu.hit.edu.cn</a>), or submit through this GitHub page directly.</p>
+<p><code>GTE</code> model quantifies batch effects for individual genes in single-cell data.</p>
 </div>
 <div class="section level1">
 <h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h1>
-<p>To run <code>GTE</code>, install from GitHub through <code>devtools</code> directly:</p>
+<p>To run <code>GTEs</code> package, install from GitHub through <code>devtools</code> directly:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'devtools'</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"yzhou1999/GTE"</span><span class="op">)</span></span></code></pre></div>
-<p>Installation may take from a few seconds to a few minutes.</p>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"yzhou1999/GTEs"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level1">
 <h1 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h1>
 <p>For usage examples, please see the <code>vignettes</code> directory of the repository.</p>
 <ul>
-<li><a href="https://yzhou1999.github.io/GTE/articles/GTE_usage.html" class="external-link">Group technical effects calculation and highly technical genes selection</a></li>
+<li><a href="https://yzhou1999.github.io/GTEs/articles/GTE_usage.html" class="external-link">Group technical effects calculation and highly batch-sensitive genes (HBGs) selection</a></li>
 </ul>
-<p>We also provided several <a href="https://github.com/yzhou1999/GTE/tree/master/demo_datasets" class="external-link">demo datasets</a>, and our main program may take a few seconds to run on a standard laptop.</p>
-<p>The codes and source data to benchmark the batch separation metrics please see <a href="https://github.com/yzhou1999/GTE/tree/master/source_data" class="external-link">here</a>.</p>
-</div>
-<div class="section level1">
-<h1 id="datasets-used-in-the-manuscript">Datasets used in the manuscript<a class="anchor" aria-label="anchor" href="#datasets-used-in-the-manuscript"></a>
-</h1>
-<p>The datasets are available freely on public databases, and can also be downloaded in the <a href="https://doi.org/10.5281/zenodo.13358933" class="external-link">Zenodo repository</a>.</p>
 </div>
 <div class="section level1">
 <h1 id="dependencies">Dependencies<a class="anchor" aria-label="anchor" href="#dependencies"></a>
 </h1>
-<p>GTE has been successfully installed and used on Windows, Linux and Mac OS (R version &gt;= 4.0.2).</p>
+<p>GTEs has been successfully installed and used on Windows, Linux and Mac OS (R version &gt;= 4.0.2).</p>
 </div>
 
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/yzhou1999/GTE/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/yzhou1999/GTE/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/yzhou1999/GTEs/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/yzhou1999/GTEs/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -100,14 +92,14 @@
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html#citation">Citing GTE</a></li>
+<li><a href="authors.html#citation">Citing GTEs</a></li>
 </ul>
 </div>
 
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Yang Zhou <br><small class="roles"> Maintainer </small>  </li>
+<li>Yang Zhou <br><small class="roles"> Author, maintainer </small>  </li>
 </ul>
 </div>
 
