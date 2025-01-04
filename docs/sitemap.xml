@@ -7,9 +7,6 @@
     <loc>/articles/GTE_usage.html</loc>
   </url>
   <url>
-    <loc>/articles/GTEs_calculation.html</loc>
-  </url>
-  <url>
     <loc>/articles/index.html</loc>
   </url>
   <url>
@@ -22,6 +19,9 @@
     <loc>/reference/Run.GroupTechEffects.html</loc>
   </url>
   <url>
+    <loc>/reference/Select.HBGs.html</loc>
+  </url>
+  <url>
     <loc>/reference/Select.HTGs.html</loc>
   </url>
   <url>
@@ -32,6 +32,9 @@
   </url>
   <url>
     <loc>/reference/scale_data.html</loc>
+  </url>
+  <url>
+    <loc>/reference/select_hbgs.html</loc>
   </url>
   <url>
     <loc>/reference/select_htgs.html</loc>
