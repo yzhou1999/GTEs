@@ -3,7 +3,7 @@
 `GTE` model quantifies batch effects for individual genes in single-cell data.
 
 # Installation
-To run `GTEs` package, install from GitHub through ``devtools`` directly:
+To run `GTEs` package, install it from CRAN or GitHub through ``devtools`` directly:
 ```R
 install.packages('devtools')
 library(devtools)
