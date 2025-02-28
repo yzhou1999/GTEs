@@ -3,13 +3,13 @@ Type: Package
 Title: Group Technical Effects
 Version: 1.0.0
 Language: en-US
-Date: 2025-01-03
+Date: 2025-02-20
 Maintainer: Yang Zhou <yangz@stu.hit.edu.cn>
 Authors@R: person(given = "Yang",
                   family = "Zhou",
                   role = c("aut", "cre"),
                   email = "yangz@stu.hit.edu.cn")
-Description: Implementation of the GTE (Group Technical Effects) model for single-cell data.
+Description: Implementation of the GTE (Group Technical Effects) model for single-cell data. GTE is a quantitative metric to assess batch effects for individual genes in single-cell data. For a single-cell dataset, the user can calculate the GTE value for individual features (such as genes), and then identify the highly batch-sensitive features. Removing these highly batch-sensitive features results in datasets with low batch effects.
 License: GPL-3
 Encoding: UTF-8
 Depends: R (>= 4.0.0)

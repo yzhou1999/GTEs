@@ -4,7 +4,7 @@
 \alias{select_hbgs}
 \title{Select HBGs using GTE vector.}
 \usage{
-select_hbgs(gte, bins = 0.1, gte.ratio = 0.95, is.sort = T)
+select_hbgs(gte, bins = 0.1, gte.ratio = 0.95, is.sort = TRUE)
 }
 \arguments{
 \item{gte}{Named GTE vector.}

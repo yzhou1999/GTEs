@@ -4,7 +4,7 @@
 \alias{Run.GroupTechEffects}
 \title{Compute the group technical effects.}
 \usage{
-Run.GroupTechEffects(X, meta, g_factor, b_factor, do.scale = F)
+Run.GroupTechEffects(X, meta, g_factor, b_factor, do.scale = FALSE)
 }
 \arguments{
 \item{X}{Input data matrix.}
@@ -24,9 +24,15 @@ A list containing the overall GTE ($OverallTechEffects) and the GTE ($GroupTechE
 Compute the group technical effects.
 }
 \examples{
-\dontrun{
-# X is a normalized expression matrix with rows representing genes and columns representing cells.
+# X is a normalized expression matrix with rows as features and columns as cells.
+
 # meta is a data.frame with columns containing metadata such as cell type, batch, etc.
-GTE_ct <- Run.GroupTechEffects(X, meta, g_factor = "CellType", bg_factor = c("Batch", "CellType"))
-}
+
+data_file <- system.file("extdata", "example_data.rds", package = "GTEs")
+example_data <- readRDS(data_file)
+meta_file <- system.file("extdata", "example_meta.rds", package = "GTEs")
+example_meta <- readRDS(meta_file)
+GTE_ct <- Run.GroupTechEffects(example_data, example_meta,
+                               g_factor = "CellType",
+                               b_factor = "Batch")
 }

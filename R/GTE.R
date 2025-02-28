@@ -11,16 +11,22 @@
 #' @import RcppEigen
 #' @importFrom Rcpp evalCpp
 #' @examples
-#' \dontrun{
-#' # X is a normalized expression matrix with rows representing genes and columns representing cells.
+#' # X is a normalized expression matrix with rows as features and columns as cells.
+#'
 #' # meta is a data.frame with columns containing metadata such as cell type, batch, etc.
-#' GTE_ct <- Run.GroupTechEffects(X, meta, g_factor = "CellType", bg_factor = c("Batch", "CellType"))
-#' }
+#'
+#' data_file <- system.file("extdata", "example_data.rds", package = "GTEs")
+#' example_data <- readRDS(data_file)
+#' meta_file <- system.file("extdata", "example_meta.rds", package = "GTEs")
+#' example_meta <- readRDS(meta_file)
+#' GTE_ct <- Run.GroupTechEffects(example_data, example_meta,
+#'                                g_factor = "CellType",
+#'                                b_factor = "Batch")
 #' @return A list containing the overall GTE ($OverallTechEffects) and the GTE ($GroupTechEffects) of each subgroup under the group variable.
 #' @useDynLib GTEs
-Run.GroupTechEffects = function(X, meta, g_factor, b_factor, do.scale = F) {
+Run.GroupTechEffects = function(X, meta, g_factor, b_factor, do.scale = FALSE) {
   meta[, g_factor] = as.character(meta[, g_factor])
-  if (do.scale) X = scale_data(X, do.center = F)
+  if (do.scale) X = scale_data(X, do.center = FALSE)
 
   message("Compute the group technical effects!")
   G = group_onehot(meta, g_factor)
@@ -50,10 +56,10 @@ Run.GroupTechEffects = function(X, meta, g_factor, b_factor, do.scale = F) {
 #'
 #' @importFrom dplyr `%>%`
 #' @examples
-#' \dontrun{
 #' # GTE is the result of Run.GroupTechEffects function.
+#' data_file <- system.file("extdata", "GTE_ct.rds", package = "GTEs")
+#' GTE_ct <- readRDS(data_file)
 #' HBGs <- Select.HBGs(GTE_ct)
-#' }
 #' @return Identified HBGs.
 #' @useDynLib GTEs
 Select.HBGs <- function(GTE, bins = 0.1, gte.ratio = 0.95) {
@@ -70,9 +76,9 @@ Select.HBGs <- function(GTE, bins = 0.1, gte.ratio = 0.95) {
   mm$gte = as.vector(tapply(all_df$gte, all_df$hbg, sum)[as.character(mm$hbg)])
   mm = mm[order(-mm$Freq, -mm$gte), ]
   all_gte = GTE$OverallTechEffects[mm$hbg]
-  other_gte = sort(GTE$OverallTechEffects[!names(GTE$OverallTechEffects) %in% mm$hbg], decreasing = T)
+  other_gte = sort(GTE$OverallTechEffects[!names(GTE$OverallTechEffects) %in% mm$hbg], decreasing = TRUE)
   all_gte = c(all_gte, other_gte)
-  all_hbgs = select_hbgs(all_gte, bins, gte.ratio, is.sort = F)
+  all_hbgs = select_hbgs(all_gte, bins, gte.ratio, is.sort = FALSE)
   message(paste0("Find ", length(all_hbgs), " HBGs, GTE proportion: ", sum(all_gte[all_hbgs])/sum(all_gte)))
   all_hbgs
 }
@@ -85,13 +91,13 @@ Select.HBGs <- function(GTE, bins = 0.1, gte.ratio = 0.95) {
 #' @param gte.ratio Ratio of selected HBGs to overall GTE.
 #' @param is.sort Whether to sort genes by GTE from largest to smallest.
 #'
-select_hbgs <- function(gte, bins = 0.1, gte.ratio = 0.95, is.sort = T) {
+select_hbgs <- function(gte, bins = 0.1, gte.ratio = 0.95, is.sort = TRUE) {
   n <- 1/bins
   n_genes <- length(gte)
   split_ns <- split(1:n_genes, ceiling(1:n_genes / ceiling(n_genes/n)))
   quantile_ns <- sapply(split_ns, max)
   GTE <- gte
-  if (is.sort) GTE <- sort(gte, decreasing = T)
+  if (is.sort) GTE <- sort(gte, decreasing = TRUE)
   ratio_GTE <- cumsum(GTE)[quantile_ns] / sum(GTE)
   hbg_ratio <- which(ratio_GTE >= gte.ratio)[1] * bins
   hbgs <- names(GTE[GTE > stats::quantile(GTE, 1-hbg_ratio)])
@@ -126,8 +132,8 @@ group_onehot <- function(x, ivar) {
 #'
 #' @import Matrix
 scale_data <- function(data.x,
-                       do.center = T,
-                       do.scale = T,
+                       do.center = TRUE,
+                       do.scale = TRUE,
                        row.means = NULL,
                        row.sds = NULL) {
   if (do.center) {
@@ -150,4 +156,3 @@ scale_data <- function(data.x,
 
   data.x
 }
-

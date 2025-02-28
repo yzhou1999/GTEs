@@ -20,8 +20,8 @@ Identified HBGs.
 Select highly batch-sensitive genes (HBGs) under a group variable.
 }
 \examples{
-\dontrun{
 # GTE is the result of Run.GroupTechEffects function.
+data_file <- system.file("extdata", "GTE_ct.rds", package = "GTEs")
+GTE_ct <- readRDS(data_file)
 HBGs <- Select.HBGs(GTE_ct)
-}
 }

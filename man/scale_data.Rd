@@ -6,8 +6,8 @@
 \usage{
 scale_data(
   data.x,
-  do.center = T,
-  do.scale = T,
+  do.center = TRUE,
+  do.scale = TRUE,
   row.means = NULL,
   row.sds = NULL
 )
