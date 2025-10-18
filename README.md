@@ -19,3 +19,6 @@ See below for usage examples.
 
 # Dependencies
 GTEs has been successfully installed and used on Windows, Linux and Mac OS (R version >= 4.0.2).
+
+# Citation
+Zhou Y, Sheng Q, Wang G, Xu L, Jin S. 2025. Quantifying batch effects for individual genes in single-cell data. _Nat Comput Sci_ 2025, **5(8):** 612–620.
