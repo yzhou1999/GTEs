@@ -7,7 +7,6 @@ using namespace Eigen;
 using Eigen::Map;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
-using Eigen::MappedSparseMatrix;
 
 Eigen::MatrixXd createBeta(const Eigen::Map<Eigen::MatrixXd>& G) {
   int n = G.cols();
